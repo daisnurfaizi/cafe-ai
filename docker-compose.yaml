@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # --- 4. CAFE AI APP (NUXT) ---
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: cafe_ai_app
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://litellm_user:rahasia123@postgres_db:5432/cafe_ai
+      - LITELLM_BASE_URL=http://litellm:4000
+      - LITELLM_MASTER_KEY=sk-master-key-admin-123
+      - NUXT_SESSION_SECRET=cafe-ai-session-secret-change-me-32
+    depends_on:
+      - postgres_db
+      - litellm
+    networks:
+      - ai_network
+
+volumes:
+  postgres_ai_data:
+  redis_ai_data:
+
+networks:
+  ai_network:
+    driver: bridge

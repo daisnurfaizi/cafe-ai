@@ -1,0 +1,17 @@
+model_list:
+  - model_name: sumopod
+    litellm_params:
+      model: openai/sumopod
+      api_base: https://daisailabs.my.id/v1
+      api_key: sk-b0ce03d0d8a6fd77-uj0lyj-63339620
+      input_cost_per_token: 0.000363
+      output_cost_per_token: 0.001818
+  - model_name: gemini
+    litellm_params:
+      model: openai/gemini
+      api_base: https://daisailabs.my.id/v1
+      api_key: sk-b0ce03d0d8a6fd77-uj0lyj-63339620
+      input_cost_per_token: 0.005
+      output_cost_per_token: 0.05
+litellm_settings:
+  drop_params: true
