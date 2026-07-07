@@ -67,6 +67,14 @@ export const messages = pgTable('messages', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+// ─── Settings Table ─────────────────────────────────────────
+export const settings = pgTable('settings', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  key: varchar('key', { length: 255 }).notNull().unique(), // e.g., 'max_users'
+  value: varchar('value', { length: 255 }).notNull(),      // e.g., '10'
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 // ─── Chat Relations ─────────────────────────────────────────
 export const chatsRelations = relations(chats, ({ one, many }) => ({
   user: one(users, {
@@ -88,3 +96,5 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type ApiKey = typeof apiKeys.$inferSelect;
 export type NewApiKey = typeof apiKeys.$inferInsert;
+export type Setting = typeof settings.$inferSelect;
+export type NewSetting = typeof settings.$inferInsert;

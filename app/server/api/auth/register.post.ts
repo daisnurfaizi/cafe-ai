@@ -1,5 +1,5 @@
-import { eq } from 'drizzle-orm';
-import { users, apiKeys } from '~~/server/database/schema';
+import { eq, sql } from 'drizzle-orm';
+import { users, apiKeys, settings } from '~~/server/database/schema';
 
 /**
  * POST /api/auth/register
@@ -12,6 +12,26 @@ export default defineEventHandler(async (event) => {
     password?: string;
     fullName?: string;
   }>(event);
+
+  // ─── Enforce Max Users Quota ──────────────────────────
+  const maxUsersSetting = await db.query.settings.findFirst({
+    where: eq(settings.key, 'MAX_USERS'),
+  });
+
+  if (maxUsersSetting && maxUsersSetting.value) {
+    const maxUsers = parseInt(maxUsersSetting.value, 10);
+    if (!isNaN(maxUsers)) {
+      const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(users);
+      const userCount = Number(countResult.count);
+
+      if (userCount >= maxUsers) {
+        throw createError({
+          statusCode: 403,
+          statusMessage: `Pendaftaran ditutup. Kapasitas maksimum pengguna (${maxUsers}) telah tercapai.`,
+        });
+      }
+    }
+  }
 
   // ─── Validation ────────────────────────────────────────
   if (!body.email || !body.password || !body.fullName) {

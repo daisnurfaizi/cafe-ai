@@ -20,6 +20,13 @@
         >
           🤖 Model Management
         </button>
+        <button 
+          class="nav-item" 
+          :class="{ active: activeTab === 'settings' }" 
+          @click="activeTab = 'settings'"
+        >
+          ⚙️ System Settings
+        </button>
       </nav>
       <div class="sidebar-footer">
         <NuxtLink to="/dashboard" class="btn btn-outline btn-sm" style="width: 100%; justify-content: center;">
@@ -153,6 +160,33 @@
         </div>
       </section>
 
+      <!-- ================= SETTINGS TAB ================= -->
+      <section v-if="activeTab === 'settings'" class="admin-section">
+        <div class="section-header">
+          <h1 class="section-title">System Settings</h1>
+          <p class="text-muted text-sm">Konfigurasi batasan dan pengaturan global sistem.</p>
+        </div>
+
+        <div class="card" style="max-width: 500px;">
+          <div style="margin-bottom: var(--space-lg);">
+            <label class="font-bold" style="display: block; margin-bottom: 8px;">Batas Maksimal Pengguna Pendaftar</label>
+            <p class="text-muted text-sm" style="margin-bottom: 12px;">Berapa jumlah user maksimum yang bisa melakukan registrasi ke dalam aplikasi. Jika dikosongkan/dihapus, pendaftaran tidak dibatasi.</p>
+            <input 
+              type="number" 
+              v-model="systemSettings.MAX_USERS" 
+              class="input" 
+              placeholder="Contoh: 100"
+            />
+          </div>
+          
+          <div style="display: flex; justify-content: flex-end; border-top: 1px solid var(--bg-tertiary); padding-top: var(--space-md);">
+            <button class="btn btn-primary" @click="saveSettings" :disabled="isSavingSettings">
+              {{ isSavingSettings ? 'Menyimpan...' : 'Simpan Pengaturan' }}
+            </button>
+          </div>
+        </div>
+      </section>
+
     </main>
   </div>
 </template>
@@ -168,17 +202,47 @@ const activeTab = ref('users');
 const users = ref<any[]>([]);
 const availableModels = ref<any[]>([]);
 const modelsEdit = ref<any[]>([]);
+const systemSettings = ref<Record<string, string>>({ MAX_USERS: '' });
 
 const pendingUsers = ref(true);
 const pendingModels = ref(true);
 const isSavingModels = ref(false);
+const isSavingSettings = ref(false);
 const isSavingUser = ref<string | null>(null);
 
 const editState = ref<Record<string, { maxTokens: number, models: string[] }>>({});
 
 onMounted(async () => {
-  await Promise.all([fetchModels(), fetchUsers()]);
+  await Promise.all([fetchModels(), fetchUsers(), fetchSettings()]);
 });
+
+const fetchSettings = async () => {
+  try {
+    const data = await $fetch<any>('/api/admin/settings', {
+      headers: import.meta.server ? useRequestHeaders(['cookie']) as any : undefined
+    });
+    if (data.settings) {
+      systemSettings.value = { ...systemSettings.value, ...data.settings };
+    }
+  } catch (err) {
+    console.error('Failed to load settings:', err);
+  }
+};
+
+const saveSettings = async () => {
+  isSavingSettings.value = true;
+  try {
+    await $fetch('/api/admin/settings', {
+      method: 'PUT',
+      body: { settings: systemSettings.value }
+    });
+    alert('System settings updated successfully.');
+  } catch (err: any) {
+    alert('Failed to update settings: ' + err.message);
+  } finally {
+    isSavingSettings.value = false;
+  }
+};
 
 const fetchModels = async () => {
   pendingModels.value = true;
