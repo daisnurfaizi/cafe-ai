@@ -7,7 +7,7 @@ let cookie = '';
 
 describe('API Gateway & Token Manager', () => {
   const testUser = {
-    email: `test_integration_${Date.now()}@tempo.co`,
+    email: `test_integration_${Date.now()}@example.com`,
     password: 'password123',
     fullName: 'Integration Test User',
   };

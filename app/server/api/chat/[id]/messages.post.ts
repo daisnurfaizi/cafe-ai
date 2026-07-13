@@ -24,15 +24,19 @@ export default defineEventHandler(async (event) => {
 
   if (!role || !content) throw createError({ statusCode: 400, statusMessage: 'Missing role or content' });
 
-  const [newMessage] = await db
+  const messageId = crypto.randomUUID();
+  await db
     .insert(messages)
     .values({
+      id: messageId,
       chatId,
       role,
       content,
-    })
-    .returning();
-    
+    });
+
+  // Fetch the inserted message
+  const [newMessage] = await db.select().from(messages).where(eq(messages.id, messageId));
+
   // Update chat updatedAt
   await db.update(chats).set({ updatedAt: new Date() }).where(eq(chats.id, chatId));
 

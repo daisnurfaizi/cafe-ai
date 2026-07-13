@@ -52,7 +52,7 @@
           <span>Nuxt 4</span>
           <span>Bun</span>
           <span>Drizzle ORM</span>
-          <span>PostgreSQL</span>
+          <span>MySQL</span>
           <span>LiteLLM</span>
           <span>9Router</span>
         </div>

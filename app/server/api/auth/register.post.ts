@@ -4,7 +4,7 @@ import { users, apiKeys } from '~~/server/database/schema';
 /**
  * POST /api/auth/register
  * Creates a new user, generates a LiteLLM API key with 1M token limit,
- * and stores both in PostgreSQL.
+ * and stores both in MySQL.
  */
 export default defineEventHandler(async (event) => {
   const body = await readBody<{
@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
     fullName?: string;
   }>(event);
 
-  // ─── Validation ────────────────────────────────────────
+  // ─── Validation ────────────────────────────────
   if (!body.email || !body.password || !body.fullName) {
     throw createError({
       statusCode: 400,
@@ -36,7 +36,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // ─── Check duplicate email ─────────────────────────────
+  // ─── Check duplicate email ─────────────────────
   const existingUser = await db.query.users.findFirst({
     where: eq(users.email, body.email),
   });
@@ -48,23 +48,27 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // ─── Hash password (Bun built-in) ─────────────────────
+  // ─── Hash password (Bun built-in) ─────────────
   const passwordHash = await Bun.password.hash(body.password, {
     algorithm: 'bcrypt',
     cost: 10,
   });
 
-  // ─── Insert user ───────────────────────────────────────
-  const [newUser] = await db
+  // ─── Insert user ───────────────────────────────
+  const userId = crypto.randomUUID();
+  await db
     .insert(users)
     .values({
+      id: userId,
       email: body.email,
       passwordHash,
       fullName: body.fullName,
-    })
-    .returning();
+    });
 
-  // ─── Generate LiteLLM key ─────────────────────────────
+  // Fetch the inserted user
+  const [newUser] = await db.select().from(users).where(eq(users.id, userId));
+
+  // ─── Generate LiteLLM key ─────────────────────
   let litellmResponse;
   try {
     litellmResponse = await generateLiteLLMKey(newUser.id, newUser.email);
@@ -77,18 +81,19 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // ─── Store API key ────────────────────────────────────
-  const [newApiKey] = await db
+  // ─── Store API key ────────────────────────────
+  const keyId = crypto.randomUUID();
+  await db
     .insert(apiKeys)
     .values({
+      id: keyId,
       userId: newUser.id,
       litellmKeyId: litellmResponse.token || litellmResponse.key,
       apiKey: litellmResponse.key,
       maxTokens: 1_000_000,
-    })
-    .returning();
+    });
 
-  // ─── Set session ──────────────────────────────────────
+  // ─── Set session ──────────────────────────────
   const session = await useSession(event, {
     password: env.SESSION_SECRET,
   });

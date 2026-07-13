@@ -16,7 +16,7 @@
               v-model="form.email"
               type="email"
               class="input"
-              placeholder="user@tempo.co"
+              placeholder="user@example.com"
               required
             />
           </div>

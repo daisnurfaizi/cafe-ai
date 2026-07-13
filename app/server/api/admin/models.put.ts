@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
     fs.writeFileSync(configPath, newYaml, 'utf8');
     
     // Restart LiteLLM container to apply changes
-    exec('docker restart litellm_gateway', { cwd: path.resolve(process.cwd(), '..') });
+    exec('docker restart cafe-litellm', { cwd: path.resolve(process.cwd(), '..') });
     
     return { success: true };
   } catch (err: any) {
